@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -10,16 +11,24 @@ namespace Dan_XXXVII_Bojana_Backo
 {
     public class GenerateRoutes
     {
+        readonly object listLock = new object();
         static List<int> routesToDestination = new List<int>();
+        static List<int> divisibleBy3 = new List<int>();
         Random random = new Random();
+        Stopwatch stopwatch = new Stopwatch();
 
         // Entry of 1000 randomly generated numbers from 1 to 5000
         // which represent the markings of possible routes to the destination
         public void GenerateNumbers()
         {
+            int number;
             for (int i = 0; i < 1000; i++)
             {
-                int number = random.Next(1, 5001);
+                do
+                {
+                    number = random.Next(1, 5001);
+                } while (routesToDestination.Contains(number));
+
                 routesToDestination.Add(number);
             }
             Console.WriteLine("\nMarkings of possible routes to the destination: \n");
@@ -27,7 +36,13 @@ namespace Dan_XXXVII_Bojana_Backo
             {
                 Console.Write(item + " ");
             }
-            WriteRoutesToFile();
+            lock (listLock)
+            {
+                stopwatch.Start();
+                WriteRoutesToFile();
+                stopwatch.Stop();
+                Monitor.Pulse(listLock);
+            }
         }
 
         public void WriteRoutesToFile()
@@ -44,6 +59,7 @@ namespace Dan_XXXVII_Bojana_Backo
                     sw.Close();
                     //Console.WriteLine(Thread.CurrentThread.Name + " has finished writing to the file!");
                 }
+
             }
             catch (FileNotFoundException e)
             {
@@ -61,22 +77,35 @@ namespace Dan_XXXVII_Bojana_Backo
         {
             try
             {
+                lock (listLock)
+                {
+                    while(routesToDestination.Count != 1000)
+                    {
+                        Monitor.Wait(listLock);
+                    }
+                }
                 using (StreamReader sr = File.OpenText(Program.fileRoutes))
                 {
-                    List<int> divisibleBy3 = new List<int>();
                     int[] bestRoutes = new int[10];
                     string line;
                     int num;
                     while ((line = sr.ReadLine()) != null)
                     {
                         Int32.TryParse(line, out num);
-                        if (num % 3 == 0)
+                        if (stopwatch.ElapsedMilliseconds <= 3000)
+                        {
+                            if (num % 3 == 0)
+                            {
+                                divisibleBy3.Add(num);
+                            }
+                        }
+                        else
                         {
                             divisibleBy3.Add(num);
                         }
                     }
                     divisibleBy3.Sort();
-                    Console.WriteLine("\nBest routes are: ");
+                    Console.WriteLine("\nBest routes are: \n");
                     for (int i = 0; i < 10; i++)
                     {
                         bestRoutes[i] = divisibleBy3[i];
