@@ -14,6 +14,7 @@ namespace Dan_XXXVII_Bojana_Backo
         readonly object listLock = new object();
         static List<int> routesToDestination = new List<int>();
         static List<int> divisibleBy3 = new List<int>();
+        public static int[] bestRoutes = new int[10];
         Random random = new Random();
         Stopwatch stopwatch = new Stopwatch();
 
@@ -86,7 +87,6 @@ namespace Dan_XXXVII_Bojana_Backo
                 }
                 using (StreamReader sr = File.OpenText(Program.fileRoutes))
                 {
-                    int[] bestRoutes = new int[10];
                     string line;
                     int num;
                     while ((line = sr.ReadLine()) != null)
@@ -105,7 +105,7 @@ namespace Dan_XXXVII_Bojana_Backo
                         }
                     }
                     divisibleBy3.Sort();
-                    Console.WriteLine("\nBest routes are: \n");
+                    Console.WriteLine("\n\nBest routes are: \n");
                     for (int i = 0; i < 10; i++)
                     {
                         bestRoutes[i] = divisibleBy3[i];
